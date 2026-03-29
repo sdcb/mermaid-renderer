@@ -462,6 +462,7 @@ async function renderDiagram() {
     return;
   }
 
+  emptyState.hidden = true;
   setStatus("is-working", "渲染中", "Mermaid 正在根据当前文本和主题生成图表。");
 
   try {

@@ -530,6 +530,10 @@ textarea {
   color: var(--text-secondary);
 }
 
+.empty-state[hidden] {
+  display: none !important;
+}
+
 .empty-state p {
   margin: 0 0 8px;
   font-family: var(--font-display);
