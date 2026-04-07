@@ -3,121 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="基于 React、TypeScript 和 Vite 的 Mermaid 渲染器，支持主题切换、缩放和 SVG/PNG 导出。">
   <title>Mermaid Renderer</title>
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <h1>Mermaid Renderer</h1>
-      <a
-        class="github-link"
-        href="https://github.com/sdcb/mermaid-renderer"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="GitHub"
-        title="GitHub"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.2-.02-2.18-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.72 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.21-1.5 3.18-1.19 3.18-1.19.64 1.59.24 2.77.12 3.06.74.81 1.19 1.84 1.19 3.11 0 4.45-2.69 5.42-5.26 5.7.41.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"></path>
-        </svg>
-      </a>
-    </header>
-
-    <main class="workspace">
-      <section class="panel panel-editor">
-        <div class="panel-header">
-          <div>
-            <h2>编辑器</h2>
-          </div>
-          <button id="sample-button" class="ghost-button" type="button">载入示例</button>
-        </div>
-
-        <label class="editor-field" for="mermaid-input">
-          <span class="sr-only">Mermaid 输入框</span>
-          <textarea id="mermaid-input" spellcheck="false"></textarea>
-        </label>
-
-        <div class="status-card">
-          <div class="status-row">
-            <span class="status-label">渲染状态</span>
-            <span id="render-status" class="status-pill is-idle">等待渲染</span>
-          </div>
-          <p id="render-message" class="status-message">修改左侧文本后会自动刷新图表。</p>
-        </div>
-
-        <div class="controls-section">
-          <div class="section-heading">
-            <h3>配色风格</h3>
-          </div>
-          <div id="theme-list" class="theme-list" aria-label="主题预设"></div>
-        </div>
-      </section>
-
-      <div
-        id="workspace-resizer"
-        class="workspace-resizer"
-        aria-hidden="true"
-        title="拖拽调整编辑器宽度"
-      ></div>
-
-      <section class="panel panel-preview">
-        <div class="panel-header">
-          <div>
-            <h2>图形预览</h2>
-          </div>
-          <div class="zoom-controls" aria-label="缩放控制">
-            <button id="zoom-out" class="ghost-button" type="button">-</button>
-            <button id="zoom-reset" class="ghost-button" type="button">重置</button>
-            <button id="zoom-in" class="ghost-button" type="button">+</button>
-          </div>
-        </div>
-
-        <div id="preview-stage" class="preview-stage">
-          <div class="export-toolbar" aria-label="导出工具">
-            <button
-              id="download-svg"
-              class="icon-button"
-              type="button"
-              data-tooltip="下载 SVG"
-              aria-label="下载 SVG"
-              title="下载 SVG"
-              disabled
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M7 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="12" y="22" text-anchor="middle" font-size="8" font-weight="800" font-family="Arial,Helvetica,sans-serif" letter-spacing="0.5">SVG</text>
-              </svg>
-            </button>
-            <button
-              id="download-png"
-              class="icon-button"
-              type="button"
-              data-tooltip="下载 PNG"
-              aria-label="下载 PNG"
-              title="下载 PNG"
-              disabled
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M7 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="12" y="22" text-anchor="middle" font-size="8" font-weight="800" font-family="Arial,Helvetica,sans-serif" letter-spacing="0.5">PNG</text>
-              </svg>
-            </button>
-          </div>
-          <div id="empty-state" class="empty-state">
-            <p>等待图表渲染</p>
-          </div>
-          <div id="preview-surface" class="preview-surface" aria-live="polite"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script src="./vendor/mermaid.min.js"></script>
-  <script src="./vendor/svg-pan-zoom.min.js"></script>
-  <script src="./app.js" defer></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

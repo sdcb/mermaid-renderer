@@ -1,6 +1,6 @@
 # Mermaid Renderer
 
-一个纯前端的 Mermaid 渲染工具网站。
+一个基于 React、TypeScript 和 Vite 的 Mermaid 渲染工具网站。
 
 它提供左侧代码编辑、右侧实时预览，支持拖拽缩放、主题配色切换，以及导出 `SVG` 和 `PNG`。
 
@@ -19,24 +19,46 @@
 - 支持多套配色风格
 - 支持导出 `SVG` 和 `PNG`
 - 支持拖拽调整编辑器和预览区宽度
-- 纯静态前端实现，无后端依赖
+- 基于 `React 19` + `TypeScript` + `Vite 8`
+- 纯前端实现，无后端依赖
 
 ## Local Development
 
-直接启动一个静态文件服务器即可，例如：
+安装依赖：
 
 ```powershell
-python -m http.server 4173
+npm install
 ```
 
-然后打开：
+启动开发服务器：
+
+```powershell
+npm run dev
+```
+
+执行 lint：
+
+```powershell
+npm run lint
+```
+
+构建生产版本：
+
+```powershell
+npm run build
+```
+
+默认开发地址：
 
 ```text
-http://127.0.0.1:4173/
+http://127.0.0.1:5173/
 ```
 
 ## Tech
 
 - `Mermaid`
 - `svg-pan-zoom`
-- 原生 `HTML / CSS / JavaScript`
+- `React`
+- `TypeScript`
+- `Vite`
+- `ESLint`

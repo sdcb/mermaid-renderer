@@ -17,11 +17,10 @@
   --radius-lg: 20px;
   --radius-md: 14px;
   --grid-line: rgba(120, 216, 255, 0.08);
-  --font-ui: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
-  --font-display: "Bahnschrift", "Aptos Display", "Segoe UI Variable", "Microsoft YaHei UI", sans-serif;
-  --font-mono: "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  --font-ui: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --font-display: 'Bahnschrift', 'Aptos Display', 'Segoe UI Variable', 'Microsoft YaHei UI', sans-serif;
+  --font-mono: 'Cascadia Mono', 'Consolas', 'SFMono-Regular', monospace;
   --editor-width: 520px;
-  --resizer-width: 8px;
   --workspace-gap: 6px;
   --panel-padding: 12px;
   --panel-border-width: 1px;
@@ -33,7 +32,8 @@
 }
 
 html,
-body {
+body,
+#root {
   margin: 0;
   min-height: 100%;
 }
@@ -56,7 +56,7 @@ body.is-resizing * {
 body::before {
   position: fixed;
   inset: 0;
-  content: "";
+  content: '';
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
@@ -68,6 +68,14 @@ body::before {
 button,
 textarea {
   font: inherit;
+}
+
+button {
+  appearance: none;
+}
+
+svg {
+  shape-rendering: geometricPrecision;
 }
 
 .sr-only {
@@ -138,7 +146,7 @@ textarea {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(360px, var(--editor-width)) var(--resizer-width) minmax(420px, 1fr);
+  grid-template-columns: minmax(360px, var(--editor-width)) 8px minmax(420px, 1fr);
   gap: var(--workspace-gap);
   align-items: stretch;
 }
@@ -156,7 +164,7 @@ textarea {
 .panel::after {
   position: absolute;
   inset: 0;
-  content: "";
+  content: '';
   border-radius: inherit;
   background: linear-gradient(140deg, rgba(120, 216, 255, 0.08), transparent 36%, rgba(255, 209, 115, 0.08));
   pointer-events: none;
@@ -173,7 +181,7 @@ textarea {
 
 .workspace-resizer {
   position: relative;
-  min-width: var(--resizer-width);
+  min-width: 8px;
   cursor: col-resize;
   touch-action: none;
 }
@@ -184,7 +192,7 @@ textarea {
   bottom: 12px;
   left: 50%;
   width: 1px;
-  content: "";
+  content: '';
   border-radius: 999px;
   background: rgba(147, 166, 201, 0.18);
   transform: translateX(-50%);
@@ -197,10 +205,9 @@ textarea {
   left: 50%;
   width: 8px;
   height: 56px;
-  content: "";
+  content: '';
   border-radius: 999px;
-  background:
-    radial-gradient(circle, rgba(120, 216, 255, 0.9) 1.2px, transparent 1.3px) center / 8px 12px repeat-y;
+  background: radial-gradient(circle, rgba(120, 216, 255, 0.9) 1.2px, transparent 1.3px) center / 8px 12px repeat-y;
   opacity: 0.72;
   transform: translate(-50%, -50%);
   transition: opacity 180ms ease, transform 180ms ease;
@@ -238,7 +245,7 @@ textarea {
   min-height: 280px;
 }
 
-#mermaid-input {
+.mermaid-input {
   width: 100%;
   height: 100%;
   min-height: 340px;
@@ -255,7 +262,7 @@ textarea {
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
-#mermaid-input:focus {
+.mermaid-input:focus {
   border-color: rgba(120, 216, 255, 0.44);
   box-shadow: 0 0 0 4px rgba(120, 216, 255, 0.1);
 }
@@ -347,15 +354,14 @@ textarea {
 .theme-card .swatches {
   display: inline-flex;
   gap: 8px;
-  flex-direction: row;
   align-items: center;
   flex-wrap: nowrap;
 }
 
 .swatches i {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
 }
@@ -386,46 +392,23 @@ textarea {
   transform: translate(-50%, 0);
 }
 
-.primary-button,
-.secondary-button,
 .ghost-button {
   border: 1px solid transparent;
   border-radius: 16px;
   padding: 12px 16px;
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, opacity 180ms ease;
-}
-
-.primary-button:hover,
-.secondary-button:hover,
-.ghost-button:hover,
-.primary-button:focus-visible,
-.secondary-button:focus-visible,
-.ghost-button:focus-visible {
-  transform: translateY(-1px);
-  outline: none;
-}
-
-.primary-button {
-  background: linear-gradient(135deg, #78d8ff, #2ca3dc);
-  color: #04101d;
-  font-weight: 700;
-}
-
-.secondary-button {
-  background: rgba(12, 24, 42, 0.92);
-  border-color: rgba(147, 166, 201, 0.18);
-  color: var(--text-primary);
-}
-
-.ghost-button {
   background: rgba(12, 24, 42, 0.72);
   border-color: rgba(147, 166, 201, 0.14);
   color: var(--text-primary);
 }
 
-.primary-button:disabled,
-.secondary-button:disabled,
+.ghost-button:hover,
+.ghost-button:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
 .ghost-button:disabled {
   opacity: 0.42;
   cursor: not-allowed;
@@ -447,7 +430,6 @@ textarea {
   min-height: 540px;
   border: var(--inner-border-width) solid rgba(147, 166, 201, 0.11);
   border-radius: calc(var(--radius-xl) - 8px);
-  background: rgba(4, 10, 18, 0.72);
   overflow: hidden;
 }
 
@@ -612,7 +594,7 @@ textarea {
     padding: var(--panel-padding);
   }
 
-  #mermaid-input,
+  .mermaid-input,
   .preview-stage {
     border-color: rgba(147, 166, 201, 0.09);
   }
