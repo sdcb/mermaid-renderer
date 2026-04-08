@@ -1,9 +1,16 @@
 export function IconLoad() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h3.3c.5 0 1 .2 1.4.58l1.22 1.17c.23.17.5.25.78.25H17.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18h-11A2.5 2.5 0 0 1 4 15.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M12 9.5v5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M9.5 12l2.5 2.5 2.5-2.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* 开牌外轮布（左右两页，中间向下弧起） */}
+      <path
+        d="M3 6.5C6 5.5 10 6 12 8c2-2 6-2.5 9-1.5V19c-3-1-7-.5-9 1.5-2-2-6-2.5-9-1.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      {/* 书脊 */}
+      <path d="M12 8v11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
