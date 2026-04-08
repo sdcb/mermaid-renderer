@@ -99,6 +99,7 @@ function App() {
   const [isSavePopoverOpen, setIsSavePopoverOpen] = useState(false);
   const [savePopoverMode, setSavePopoverMode] = useState<SavePopoverMode>('save');
   const [saveTitleInput, setSaveTitleInput] = useState('');
+  const [editorReady, setEditorReady] = useState(false);
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
@@ -416,6 +417,7 @@ function App() {
   }, []);
 
   const handleEditorMount: OnMount = (editor, monaco) => {
+    setEditorReady(true);
     editor.addAction({
       id: 'save-diagram',
       label: '保存稿件',
@@ -671,16 +673,27 @@ function App() {
           <div className="editor-field">
             <span className="sr-only">Mermaid 输入框</span>
             <div className="mermaid-editor-shell">
-              <Editor
-                height="100%"
-                language="markdown"
-                loading={<div className="editor-loading">正在加载 Monaco Editor...</div>}
-                options={MONACO_OPTIONS}
-                theme="vs-dark"
-                value={source}
-                onChange={handleEditorChange}
-                onMount={handleEditorMount}
-              />
+              {!editorReady && (
+                <textarea
+                  className="editor-textarea-fallback"
+                  value={source}
+                  onChange={(event) => setSource(event.target.value)}
+                  spellCheck={false}
+                  aria-label="Mermaid 输入框"
+                />
+              )}
+              <div style={editorReady ? undefined : { position: 'absolute', inset: 0, visibility: 'hidden', pointerEvents: 'none' }}>
+                <Editor
+                  height="100%"
+                  language="markdown"
+                  loading={null}
+                  options={MONACO_OPTIONS}
+                  theme="vs-dark"
+                  value={source}
+                  onChange={handleEditorChange}
+                  onMount={handleEditorMount}
+                />
+              </div>
             </div>
           </div>
 
