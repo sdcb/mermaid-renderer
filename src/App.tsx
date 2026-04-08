@@ -575,27 +575,11 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <h1>Mermaid Renderer</h1>
-        <a
-          className="github-link"
-          href="https://github.com/sdcb/mermaid-renderer"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub"
-          title="GitHub"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.2-.02-2.18-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.72 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.21-1.5 3.18-1.19 3.18-1.19.64 1.59.24 2.77.12 3.06.74.81 1.19 1.84 1.19 3.11 0 4.45-2.69 5.42-5.26 5.7.41.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
-          </svg>
-        </a>
-      </header>
-
       <main ref={workspaceRef} className="workspace" style={workspaceStyle}>
         <section className="panel panel-editor">
           <div className="panel-header panel-header-editor">
             <div className="panel-copy">
-              <h2>编辑器</h2>
+              <h2>Mermaid Renderer</h2>
               {currentDiagramLabel || detachedTitleLabel ? (
                 <p className="panel-caption">
                   {currentDiagramLabel ? `当前稿件：${currentDiagramLabel}` : `当前标题：${detachedTitleLabel}`}
@@ -709,28 +693,48 @@ function App() {
             <div>
               <h2>图形预览</h2>
             </div>
-            <div className="zoom-controls" aria-label="缩放控制">
-              <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomOut()}>
-                -
-              </button>
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => {
-                  if (!panZoomRef.current) {
-                    return;
-                  }
+            <div className="preview-toolbar">
+              <div className="zoom-controls" aria-label="缩放控制">
+                <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomOut()}>
+                  -
+                </button>
+                <button
+                  className="icon-button"
+                  type="button"
+                  data-tooltip="重置视图"
+                  aria-label="重置视图"
+                  title="重置视图"
+                  onClick={() => {
+                    if (!panZoomRef.current) {
+                      return;
+                    }
 
-                  panZoomRef.current.resetZoom();
-                  panZoomRef.current.center();
-                  panZoomRef.current.fit();
-                }}
+                    panZoomRef.current.resetZoom();
+                    panZoomRef.current.center();
+                    panZoomRef.current.fit();
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6.6 8.2A7 7 0 1 1 5 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M4.5 4.5v4.8h4.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomIn()}>
+                  +
+                </button>
+              </div>
+              <a
+                className="github-link github-link-inline"
+                href="https://github.com/sdcb/mermaid-renderer"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                title="GitHub"
               >
-                重置
-              </button>
-              <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomIn()}>
-                +
-              </button>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.2-.02-2.18-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.72 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.21-1.5 3.18-1.19 3.18-1.19.64 1.59.24 2.77.12 3.06.74.81 1.19 1.84 1.19 3.11 0 4.45-2.69 5.42-5.26 5.7.41.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+                </svg>
+              </a>
             </div>
           </div>
 

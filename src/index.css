@@ -92,29 +92,13 @@ svg {
 
 .app-shell {
   min-height: 100vh;
-  padding: 20px;
+  padding: 14px 20px 20px;
 }
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.topbar h1,
 .panel-header h2,
 .section-heading h3 {
   margin: 0;
   font-family: var(--font-display);
-}
-
-.topbar h1 {
-  font-size: clamp(1.4rem, 2.6vw, 2rem);
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .github-link {
@@ -174,7 +158,7 @@ svg {
 .panel-preview {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 126px);
+  min-height: calc(100vh - 34px);
   padding: var(--panel-padding);
   min-width: 0;
 }
@@ -236,6 +220,8 @@ svg {
 }
 
 .panel-header {
+  position: relative;
+  z-index: 6;
   margin-bottom: 12px;
 }
 
@@ -244,8 +230,9 @@ svg {
 }
 
 .panel-header-editor h2 {
-  font-size: 1.05rem;
+  font-size: clamp(1.02rem, 1.8vw, 1.34rem);
   line-height: 40px;
+  letter-spacing: 0.02em;
 }
 
 .panel-copy {
@@ -264,6 +251,8 @@ svg {
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  position: relative;
+  z-index: 7;
 }
 
 .toolbar-icon-button {
@@ -416,6 +405,17 @@ svg {
 
 .inline-notice {
   margin-bottom: 12px;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.github-link-inline {
+  flex: 0 0 auto;
 }
 
 .storage-notice.is-success {
@@ -691,6 +691,7 @@ svg {
   pointer-events: none;
   transform: translate(-50%, 4px);
   transition: opacity 160ms ease, transform 160ms ease;
+  z-index: 30;
 }
 
 .icon-button:hover::after,
@@ -727,7 +728,6 @@ svg {
 .preview-surface {
   display: grid;
   place-items: center;
-  padding: 24px;
   overflow: hidden;
 }
 
@@ -855,10 +855,6 @@ svg {
     padding: 16px;
   }
 
-  .topbar {
-    margin-bottom: 12px;
-  }
-
   .panel-editor,
   .panel-preview {
     padding: var(--panel-padding);
@@ -879,7 +875,8 @@ svg {
   }
 
   .panel-toolbar,
-  .popover-actions {
+  .popover-actions,
+  .preview-toolbar {
     justify-content: flex-start;
   }
 
