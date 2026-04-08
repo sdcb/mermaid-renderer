@@ -6,14 +6,13 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import svgPanZoom from 'svg-pan-zoom';
 import {
   DEFAULT_DIAGRAM_TITLE_PREFIX,
-  IDLE_STATUS,
   SAMPLE_DIAGRAM,
   SAVED_DIAGRAMS_STORAGE_KEY,
   THEME_PRESETS,
 } from './lib/constants';
 import { deleteSavedDiagram, readSavedDiagrams, upsertSavedDiagram } from './lib/savedDiagrams';
 import { downloadBlob, downloadDataUrl, normalizeSvgMarkup, sanitizeSvgForPng, timestampForFilename } from './lib/exporters';
-import type { RenderStatus, SavedDiagram, ThemePreset } from './lib/types';
+import type { SavedDiagram, ThemePreset } from './lib/types';
 import type { SvgPanZoomInstance } from 'svg-pan-zoom';
 import { IconButton, IconLink } from './components/IconButton';
 import {
@@ -86,7 +85,6 @@ function App() {
   const [activeThemeId, setActiveThemeId] = useState(THEME_PRESETS[0].id);
   const [lastSuccessfulSvg, setLastSuccessfulSvg] = useState('');
   const [currentValid, setCurrentValid] = useState(false);
-  const [status, setStatus] = useState<RenderStatus>(IDLE_STATUS);
   const [editorWidth, setEditorWidth] = useState<number | null>(520);
   const [isResizing, setIsResizing] = useState(false);
   const [renderCycle, setRenderCycle] = useState(0);
@@ -198,19 +196,8 @@ function App() {
       setCurrentValid(false);
       setLastSuccessfulSvg('');
       destroyPanZoom();
-      setStatus({
-        kind: 'idle',
-        text: '等待渲染',
-        message: '请输入 Mermaid 文本以开始生成图表。',
-      });
       return;
     }
-
-    setStatus({
-      kind: 'working',
-      text: '渲染中',
-      message: 'Mermaid 正在根据当前文本和主题生成图表。',
-    });
 
     try {
       mermaid.initialize({
@@ -230,22 +217,13 @@ function App() {
 
       setLastSuccessfulSvg(svg);
       setCurrentValid(true);
-      setStatus({
-        kind: 'success',
-        text: '已同步',
-        message: `当前主题为“${nextTheme.label}”，可以拖拽缩放并导出。`,
-      });
     } catch (error) {
       if (token !== renderTokenRef.current) {
         return;
       }
 
       setCurrentValid(false);
-      setStatus({
-        kind: 'error',
-        text: '语法错误',
-        message: error instanceof Error ? error.message : 'Mermaid 解析失败，请检查语法。',
-      });
+      console.error('Mermaid render failed:', error);
     }
   });
 
@@ -529,11 +507,7 @@ function App() {
 
       downloadDataUrl(canvas.toDataURL('image/png'), `mermaid-diagram-${timestampForFilename()}.png`);
     } catch (error) {
-      setStatus({
-        kind: 'error',
-        text: '导出失败',
-        message: error instanceof Error ? error.message : 'PNG 导出失败。',
-      });
+      console.error('PNG export failed:', error);
     } finally {
       URL.revokeObjectURL(svgUrl);
     }
@@ -695,14 +669,6 @@ function App() {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="status-card">
-            <div className="status-row">
-              <span className="status-label">渲染状态</span>
-              <span className={`status-pill is-${status.kind}`}>{status.text}</span>
-            </div>
-            <p className="status-message">{status.message}</p>
           </div>
 
           <div className="controls-section">

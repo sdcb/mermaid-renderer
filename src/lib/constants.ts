@@ -1,4 +1,4 @@
-import type { RenderStatus, ThemePreset } from './types';
+import type { ThemePreset } from './types';
 
 export const SAVED_DIAGRAMS_STORAGE_KEY = 'mermaid-renderer.saved-diagrams.v1';
 export const DEFAULT_DIAGRAM_TITLE_PREFIX = '未命名图稿';
@@ -168,8 +168,3 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
 ];
 
-export const IDLE_STATUS: RenderStatus = {
-  kind: 'idle',
-  text: '等待渲染',
-  message: '修改左侧文本后会自动刷新图表。',
-};

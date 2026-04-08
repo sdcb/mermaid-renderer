@@ -184,7 +184,6 @@ svg {
 }
 
 .panel-header,
-.status-row,
 .section-heading {
   display: flex;
   justify-content: space-between;
@@ -302,7 +301,6 @@ svg {
   height: 100%;
 }
 
-.status-card,
 .controls-section {
   position: relative;
   z-index: 1;
@@ -311,44 +309,6 @@ svg {
   border: 1px solid rgba(147, 166, 201, 0.14);
   border-radius: var(--radius-lg);
   background: var(--surface-muted);
-}
-
-.status-label {
-  font-size: 0.92rem;
-  color: var(--text-secondary);
-}
-
-.status-pill {
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.status-pill.is-idle {
-  background: rgba(120, 216, 255, 0.12);
-  color: var(--accent);
-}
-
-.status-pill.is-success {
-  background: rgba(134, 228, 165, 0.12);
-  color: var(--success);
-}
-
-.status-pill.is-error {
-  background: rgba(255, 122, 143, 0.12);
-  color: var(--danger);
-}
-
-.status-pill.is-working {
-  background: rgba(255, 209, 115, 0.14);
-  color: var(--accent-warm);
-}
-
-.status-message {
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 .theme-list {

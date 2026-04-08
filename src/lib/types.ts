@@ -6,14 +6,6 @@ export interface ThemePreset {
   themeVariables: Record<string, string>;
 }
 
-export type RenderStatusKind = 'idle' | 'working' | 'success' | 'error';
-
-export interface RenderStatus {
-  kind: RenderStatusKind;
-  text: string;
-  message: string;
-}
-
 export interface SavedDiagram {
   id: string;
   title: string;
