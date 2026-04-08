@@ -1,6 +1,6 @@
 import Editor from '@monaco-editor/react';
 import mermaid from 'mermaid';
-import type { ChangeEvent, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import svgPanZoom from 'svg-pan-zoom';
 import {
@@ -35,6 +35,8 @@ type StorageNotice = {
   kind: 'success' | 'error' | 'info';
   text: string;
 };
+
+type SavePopoverMode = 'save' | 'save-as';
 
 function getActiveTheme(themeId: string): ThemePreset {
   return THEME_PRESETS.find((theme) => theme.id === themeId) ?? THEME_PRESETS[0];
@@ -76,9 +78,13 @@ function App() {
   const [renderCycle, setRenderCycle] = useState(0);
   const [savedDiagrams, setSavedDiagrams] = useState<SavedDiagram[]>(() => readSavedDiagrams());
   const [diagramTitle, setDiagramTitle] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
   const [storageNotice, setStorageNotice] = useState<StorageNotice | null>(null);
+  const [isLoadPopoverOpen, setIsLoadPopoverOpen] = useState(false);
+  const [loadSearchQuery, setLoadSearchQuery] = useState('');
+  const [isSavePopoverOpen, setIsSavePopoverOpen] = useState(false);
+  const [savePopoverMode, setSavePopoverMode] = useState<SavePopoverMode>('save');
+  const [saveTitleInput, setSaveTitleInput] = useState('');
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
@@ -95,10 +101,12 @@ function App() {
     ? { '--editor-width': `${editorWidth}px` }
     : undefined) as CSSProperties | undefined;
   const currentDiagram = currentDiagramId ? savedDiagrams.find((diagram) => diagram.id === currentDiagramId) ?? null : null;
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-  const filteredDiagrams = normalizedSearchQuery
-    ? savedDiagrams.filter((diagram) => diagram.title.toLowerCase().includes(normalizedSearchQuery))
+  const normalizedLoadSearchQuery = loadSearchQuery.trim().toLowerCase();
+  const filteredDiagrams = normalizedLoadSearchQuery
+    ? savedDiagrams.filter((diagram) => diagram.title.toLowerCase().includes(normalizedLoadSearchQuery))
     : savedDiagrams;
+  const currentDiagramLabel = currentDiagram?.title ?? '';
+  const detachedTitleLabel = !currentDiagram && diagramTitle.trim() ? `${diagramTitle.trim()}（未绑定）` : '';
 
   const clearTimers = () => {
     if (renderDebounceTimerRef.current !== null) {
@@ -347,28 +355,49 @@ function App() {
     }
   }, [currentDiagram, currentDiagramId]);
 
+  useEffect(() => {
+    if (!isLoadPopoverOpen && !isSavePopoverOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      setIsLoadPopoverOpen(false);
+      setIsSavePopoverOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLoadPopoverOpen, isSavePopoverOpen]);
+
   const handleEditorChange = (value: string | undefined) => {
     setSource(value ?? '');
   };
 
-  const handleTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setDiagramTitle(event.target.value);
+  const openLoadPopover = () => {
+    setLoadSearchQuery('');
+    setIsSavePopoverOpen(false);
+    setIsLoadPopoverOpen(true);
   };
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+  const closeLoadPopover = () => {
+    setIsLoadPopoverOpen(false);
   };
 
-  const handleLoadSample = () => {
-    shouldRenderImmediatelyRef.current = true;
-    setSource(SAMPLE_DIAGRAM);
-    setCurrentDiagramId(null);
-    setDiagramTitle('');
-    setStorageNotice({
-      kind: 'info',
-      text: '已载入内置示例，可保存为新的本地图稿。',
-    });
-    setRenderCycle((value) => value + 1);
+  const openSavePopover = (mode: SavePopoverMode) => {
+    setSavePopoverMode(mode);
+    setSaveTitleInput(diagramTitle.trim() || currentDiagram?.title || '');
+    setIsLoadPopoverOpen(false);
+    setIsSavePopoverOpen(true);
+  };
+
+  const closeSavePopover = () => {
+    setIsSavePopoverOpen(false);
   };
 
   const handleThemeSelect = (themeId: string) => {
@@ -463,22 +492,23 @@ function App() {
     }
 
     try {
-      const title = diagramTitle.trim() || buildDefaultDiagramTitle();
+      const title = saveTitleInput.trim() || diagramTitle.trim() || buildDefaultDiagramTitle();
       const now = Date.now();
-      const nextDiagram: SavedDiagram = currentDiagram
+      const shouldCreateNew = savePopoverMode === 'save-as' || !currentDiagram;
+      const nextDiagram: SavedDiagram = shouldCreateNew
         ? {
-            ...currentDiagram,
-            title,
-            source,
-            themeId: activeThemeId,
-            updatedAt: now,
-          }
-        : {
             id: crypto.randomUUID(),
             title,
             source,
             themeId: activeThemeId,
             createdAt: now,
+            updatedAt: now,
+          }
+        : {
+            ...currentDiagram,
+            title,
+            source,
+            themeId: activeThemeId,
             updatedAt: now,
           };
 
@@ -486,9 +516,11 @@ function App() {
       setSavedDiagrams(nextDiagrams);
       setCurrentDiagramId(nextDiagram.id);
       setDiagramTitle(title);
+      setSaveTitleInput(title);
+      setIsSavePopoverOpen(false);
       setStorageNotice({
         kind: 'success',
-        text: currentDiagram ? `已更新“${title}”。` : `已保存“${title}”。`,
+        text: shouldCreateNew ? `已保存“${title}”。` : `已更新“${title}”。`,
       });
     } catch (error) {
       setStorageNotice({
@@ -498,12 +530,9 @@ function App() {
     }
   };
 
-  const handleDetachCurrentDiagram = () => {
-    setCurrentDiagramId(null);
-    setStorageNotice({
-      kind: 'info',
-      text: '当前编辑内容已解除与已存图稿的关联，再次保存会创建新图稿。',
-    });
+  const handleSaveSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    handleSaveDiagram();
   };
 
   const handleLoadDiagram = (diagram: SavedDiagram) => {
@@ -512,6 +541,7 @@ function App() {
     setActiveThemeId(diagram.themeId);
     setCurrentDiagramId(diagram.id);
     setDiagramTitle(diagram.title);
+    setIsLoadPopoverOpen(false);
     setStorageNotice({
       kind: 'info',
       text: `已载入“${diagram.title}”。`,
@@ -533,7 +563,7 @@ function App() {
       }
       setStorageNotice({
         kind: 'success',
-        text: `已删除“${diagram.title}”。`,
+        text: diagram.id === currentDiagramId ? `已删除“${diagram.title}”，当前内容已解除关联。` : `已删除“${diagram.title}”。`,
       });
     } catch (error) {
       setStorageNotice({
@@ -563,14 +593,63 @@ function App() {
 
       <main ref={workspaceRef} className="workspace" style={workspaceStyle}>
         <section className="panel panel-editor">
-          <div className="panel-header">
-            <div>
+          <div className="panel-header panel-header-editor">
+            <div className="panel-copy">
               <h2>编辑器</h2>
+              {currentDiagramLabel || detachedTitleLabel ? (
+                <p className="panel-caption">
+                  {currentDiagramLabel ? `当前稿件：${currentDiagramLabel}` : `当前标题：${detachedTitleLabel}`}
+                </p>
+              ) : null}
             </div>
-            <button className="ghost-button" type="button" onClick={handleLoadSample}>
-              载入示例
-            </button>
+            <div className="panel-toolbar" aria-label="图稿操作">
+              <button
+                className="icon-button toolbar-icon-button"
+                type="button"
+                data-tooltip="载入"
+                aria-label="载入"
+                title="载入"
+                onClick={openLoadPopover}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h3.3c.5 0 1 .2 1.4.58l1.22 1.17c.23.17.5.25.78.25H17.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18h-11A2.5 2.5 0 0 1 4 15.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M12 9.5v5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M9.5 12l2.5 2.5 2.5-2.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                className="icon-button toolbar-icon-button"
+                type="button"
+                data-tooltip="保存"
+                aria-label="保存"
+                title="保存"
+                onClick={() => openSavePopover('save')}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 4.5h11l3 3v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8 4.5h7v4H8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8 14.5h8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                className="icon-button toolbar-icon-button"
+                type="button"
+                data-tooltip="另存为"
+                aria-label="另存为"
+                title="另存为"
+                onClick={() => openSavePopover('save-as')}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 4.5h11l3 3v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M8 4.5h7v4H8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M12 11v7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M8.5 14.5H15.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {storageNotice ? <p className={`storage-notice inline-notice is-${storageNotice.kind}`}>{storageNotice.text}</p> : null}
 
           <div className="editor-field">
             <span className="sr-only">Mermaid 输入框</span>
@@ -614,89 +693,6 @@ function App() {
                   </span>
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className="controls-section storage-section">
-            <div className="section-heading storage-heading">
-              <div>
-                <h3>本地图稿</h3>
-                <p className="section-caption">保存在当前浏览器 localStorage，可搜索、删除和重新载入。</p>
-              </div>
-              {currentDiagramId ? (
-                <button className="ghost-button compact-button" type="button" onClick={handleDetachCurrentDiagram}>
-                  新建图稿
-                </button>
-              ) : null}
-            </div>
-
-            <div className="storage-form">
-              <input
-                className="text-input"
-                type="text"
-                placeholder="输入图稿名称"
-                value={diagramTitle}
-                onChange={handleTitleChange}
-              />
-              <button className="ghost-button" type="button" onClick={handleSaveDiagram}>
-                {currentDiagramId ? '更新图稿' : '保存图稿'}
-              </button>
-            </div>
-
-            {storageNotice ? <p className={`storage-notice is-${storageNotice.kind}`}>{storageNotice.text}</p> : null}
-
-            <div className="storage-search-row">
-              <input
-                className="text-input"
-                type="search"
-                placeholder="搜索图稿标题"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-              <span className="storage-count">
-                {filteredDiagrams.length} / {savedDiagrams.length}
-              </span>
-            </div>
-
-            <div className="saved-diagram-list" aria-label="已保存图稿列表">
-              {filteredDiagrams.length > 0 ? (
-                filteredDiagrams.map((diagram) => {
-                  const diagramTheme = getActiveTheme(diagram.themeId);
-                  return (
-                    <article
-                      key={diagram.id}
-                      className={`saved-diagram-card${diagram.id === currentDiagramId ? ' is-active' : ''}`}
-                    >
-                      <div className="saved-diagram-copy">
-                        <strong>{diagram.title}</strong>
-                        <span>
-                          {diagramTheme.label} · {formatSavedAt(diagram.updatedAt)}
-                        </span>
-                      </div>
-                      <div className="saved-diagram-actions">
-                        <button
-                          className="ghost-button compact-button"
-                          type="button"
-                          onClick={() => handleLoadDiagram(diagram)}
-                        >
-                          加载
-                        </button>
-                        <button
-                          className="ghost-button compact-button danger-button"
-                          type="button"
-                          onClick={() => handleDeleteDiagram(diagram)}
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })
-              ) : (
-                <div className="saved-diagram-empty">
-                  <p>{savedDiagrams.length > 0 ? '没有匹配的标题。' : '还没有本地图稿，保存后会显示在这里。'}</p>
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -782,6 +778,135 @@ function App() {
           </div>
         </section>
       </main>
+
+      {isLoadPopoverOpen ? (
+        <div className="popover-scrim" role="presentation" onClick={closeLoadPopover}>
+          <section
+            className="popover-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="load-popover-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="popover-header">
+              <div>
+                <h3 id="load-popover-title">载入稿件</h3>
+                <p className="popover-description">从当前浏览器中已保存的稿件里搜索、载入或删除。</p>
+              </div>
+              <button className="ghost-button compact-button" type="button" onClick={closeLoadPopover}>
+                关闭
+              </button>
+            </div>
+
+            <div className="popover-body">
+              <div className="storage-search-row">
+                <input
+                  className="text-input"
+                  type="search"
+                  placeholder="搜索稿件标题"
+                  value={loadSearchQuery}
+                  onChange={(event) => setLoadSearchQuery(event.target.value)}
+                />
+                <span className="storage-count">
+                  {filteredDiagrams.length} / {savedDiagrams.length}
+                </span>
+              </div>
+
+              <div className="saved-diagram-list popover-list" aria-label="已保存稿件列表">
+                {filteredDiagrams.length > 0 ? (
+                  filteredDiagrams.map((diagram) => {
+                    const diagramTheme = getActiveTheme(diagram.themeId);
+                    return (
+                      <article
+                        key={diagram.id}
+                        className={`saved-diagram-card${diagram.id === currentDiagramId ? ' is-active' : ''}`}
+                      >
+                        <div className="saved-diagram-copy">
+                          <strong>{diagram.title}</strong>
+                          <span>
+                            {diagramTheme.label} · {formatSavedAt(diagram.updatedAt)}
+                          </span>
+                        </div>
+                        <div className="saved-diagram-actions">
+                          <button
+                            className="ghost-button compact-button"
+                            type="button"
+                            onClick={() => handleLoadDiagram(diagram)}
+                          >
+                            载入
+                          </button>
+                          <button
+                            className="ghost-button compact-button danger-button"
+                            type="button"
+                            onClick={() => handleDeleteDiagram(diagram)}
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <div className="saved-diagram-empty">
+                    <p>{savedDiagrams.length > 0 ? '没有匹配的稿件。' : '还没有已保存稿件，先用“保存”或“另存为”创建。'}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isSavePopoverOpen ? (
+        <div className="popover-scrim" role="presentation" onClick={closeSavePopover}>
+          <section
+            className="popover-card popover-card-narrow"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-popover-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="popover-header">
+              <div>
+                <h3 id="save-popover-title">{savePopoverMode === 'save-as' ? '另存为' : '保存稿件'}</h3>
+                <p className="popover-description">
+                  {savePopoverMode === 'save-as'
+                    ? '输入新的稿件名称，当前内容会以新的条目保存到 localStorage。'
+                    : currentDiagram
+                      ? '可修改名称后覆盖当前稿件，或保留原名称直接保存。'
+                      : '输入稿件名称后保存到当前浏览器的 localStorage。'}
+                </p>
+              </div>
+              <button className="ghost-button compact-button" type="button" onClick={closeSavePopover}>
+                关闭
+              </button>
+            </div>
+
+            <form className="popover-body popover-form" onSubmit={handleSaveSubmit}>
+              <label className="popover-field">
+                <span className="popover-field-label">稿件名称</span>
+                <input
+                  autoFocus
+                  className="text-input"
+                  type="text"
+                  placeholder="输入稿件名称"
+                  value={saveTitleInput}
+                  onChange={(event) => setSaveTitleInput(event.target.value)}
+                />
+              </label>
+
+              <div className="popover-actions">
+                <button className="ghost-button" type="button" onClick={closeSavePopover}>
+                  取消
+                </button>
+                <button className="ghost-button" type="submit">
+                  {savePopoverMode === 'save-as' ? '保存为新稿件' : currentDiagram ? '保存修改' : '保存'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
