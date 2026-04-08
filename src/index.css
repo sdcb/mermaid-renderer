@@ -106,6 +106,7 @@ svg {
   grid-template-columns: minmax(360px, var(--editor-width)) 8px minmax(420px, 1fr);
   gap: var(--workspace-gap);
   align-items: stretch;
+  height: calc(100dvh - 34px);
 }
 
 .panel {
@@ -131,8 +132,9 @@ svg {
 .panel-preview {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 34px);
+  height: 100%;
   padding: var(--panel-padding);
+  min-height: 0;
   min-width: 0;
 }
 
@@ -241,15 +243,15 @@ svg {
 .editor-field {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 280px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .mermaid-editor-shell {
   width: 100%;
   height: 100%;
   flex: 1;
-  min-height: 340px;
+  min-height: 0;
   border: var(--inner-border-width) solid rgba(147, 166, 201, 0.13);
   border-radius: var(--radius-lg);
   background: rgba(5, 11, 20, 0.85);
@@ -283,7 +285,7 @@ svg {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 340px;
+  min-height: 0;
   padding: 16px;
   border: none;
   border-radius: var(--radius-lg);
@@ -303,6 +305,7 @@ svg {
 
 .controls-section {
   position: relative;
+  flex: 0 0 auto;
   z-index: 1;
   margin-top: 12px;
   padding: 12px;
@@ -575,7 +578,7 @@ svg {
 .preview-stage {
   position: relative;
   flex: 1;
-  min-height: 540px;
+  min-height: 0;
   border: var(--inner-border-width) solid rgba(147, 166, 201, 0.11);
   border-radius: calc(var(--radius-xl) - 8px);
   overflow: hidden;
@@ -827,10 +830,12 @@ svg {
   .workspace {
     grid-template-columns: 1fr;
     gap: 20px;
+    height: auto;
   }
 
   .panel-editor,
   .panel-preview {
+    height: auto;
     min-height: auto;
   }
 

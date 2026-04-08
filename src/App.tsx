@@ -80,6 +80,10 @@ function formatSavedAt(timestamp: number): string {
   }).format(new Date(timestamp));
 }
 
+function isMermaidErrorSvg(svg: string): boolean {
+  return svg.includes('Syntax error in text') || svg.includes('mermaid version');
+}
+
 function App() {
   const [source, setSource] = useState(SAMPLE_DIAGRAM);
   const [activeThemeId, setActiveThemeId] = useState(THEME_PRESETS[0].id);
@@ -210,9 +214,15 @@ function App() {
         },
       });
 
+      await mermaid.parse(trimmedSource, { suppressErrors: false });
+
       const { svg } = await mermaid.render(`mermaid-render-${Date.now()}-${token}`, trimmedSource);
       if (token !== renderTokenRef.current) {
         return;
+      }
+
+      if (isMermaidErrorSvg(svg)) {
+        throw new Error('Mermaid returned an error diagram instead of a valid SVG.');
       }
 
       setLastSuccessfulSvg(svg);
