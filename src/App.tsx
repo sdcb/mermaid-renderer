@@ -14,6 +14,19 @@ import { deleteSavedDiagram, readSavedDiagrams, upsertSavedDiagram } from './lib
 import { downloadBlob, downloadDataUrl, normalizeSvgMarkup, sanitizeSvgForPng, timestampForFilename } from './lib/exporters';
 import type { RenderStatus, SavedDiagram, ThemePreset } from './lib/types';
 import type { SvgPanZoomInstance } from 'svg-pan-zoom';
+import { IconButton, IconLink } from './components/IconButton';
+import {
+  IconClose,
+  IconLoad,
+  IconSave,
+  IconSaveAs,
+  IconResetView,
+  IconDownloadSvg,
+  IconDownloadPng,
+  IconGitHub,
+  IconZoomOut,
+  IconZoomIn,
+} from './icons';
 
 const RESIZER_WIDTH = 8;
 const DESKTOP_MEDIA_QUERY = '(min-width: 1081px)';
@@ -587,49 +600,15 @@ function App() {
               ) : null}
             </div>
             <div className="panel-toolbar" aria-label="图稿操作">
-              <button
-                className="icon-button toolbar-icon-button"
-                type="button"
-                data-tooltip="载入"
-                aria-label="载入"
-                title="载入"
-                onClick={openLoadPopover}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h3.3c.5 0 1 .2 1.4.58l1.22 1.17c.23.17.5.25.78.25H17.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18h-11A2.5 2.5 0 0 1 4 15.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M12 9.5v5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M9.5 12l2.5 2.5 2.5-2.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button
-                className="icon-button toolbar-icon-button"
-                type="button"
-                data-tooltip="保存"
-                aria-label="保存"
-                title="保存"
-                onClick={() => openSavePopover('save')}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M5 4.5h11l3 3v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M8 4.5h7v4H8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M8 14.5h8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button
-                className="icon-button toolbar-icon-button"
-                type="button"
-                data-tooltip="另存为"
-                aria-label="另存为"
-                title="另存为"
-                onClick={() => openSavePopover('save-as')}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M5 4.5h11l3 3v12A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M8 4.5h7v4H8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                  <path d="M12 11v7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M8.5 14.5H15.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </button>
+              <IconButton tooltip="载入" className="toolbar-icon-button" onClick={openLoadPopover}>
+                <IconLoad />
+              </IconButton>
+              <IconButton tooltip="保存" className="toolbar-icon-button" onClick={() => openSavePopover('save')}>
+                <IconSave />
+              </IconButton>
+              <IconButton tooltip="另存为" className="toolbar-icon-button" onClick={() => openSavePopover('save-as')}>
+                <IconSaveAs />
+              </IconButton>
             </div>
           </div>
 
@@ -669,7 +648,6 @@ function App() {
                   type="button"
                   className={`theme-card${theme.id === activeThemeId ? ' is-active' : ''}`}
                   aria-label={theme.label}
-                  title={theme.label}
                   onClick={() => handleThemeSelect(theme.id)}
                 >
                   <span className="swatches" aria-hidden="true">
@@ -695,83 +673,46 @@ function App() {
             </div>
             <div className="preview-toolbar">
               <div className="zoom-controls" aria-label="缩放控制">
-                <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomOut()}>
-                  -
-                </button>
-                <button
-                  className="icon-button"
-                  type="button"
-                  data-tooltip="重置视图"
-                  aria-label="重置视图"
-                  title="重置视图"
+                <IconButton tooltip="缩小" onClick={() => panZoomRef.current?.zoomOut()}>
+                  <IconZoomOut />
+                </IconButton>
+                <IconButton
+                  tooltip="重置视图"
                   onClick={() => {
                     if (!panZoomRef.current) {
                       return;
                     }
-
                     panZoomRef.current.resetZoom();
                     panZoomRef.current.center();
                     panZoomRef.current.fit();
                   }}
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M6.6 8.2A7 7 0 1 1 5 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M4.5 4.5v4.8h4.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <button className="ghost-button" type="button" onClick={() => panZoomRef.current?.zoomIn()}>
-                  +
-                </button>
+                  <IconResetView />
+                </IconButton>
+                <IconButton tooltip="放大" onClick={() => panZoomRef.current?.zoomIn()}>
+                  <IconZoomIn />
+                </IconButton>
               </div>
-              <a
-                className="github-link github-link-inline"
+              <IconLink
+                tooltip="GitHub"
                 href="https://github.com/sdcb/mermaid-renderer"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="GitHub"
-                title="GitHub"
+                className="github-link-inline"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.2-.02-2.18-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.72 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.21-1.5 3.18-1.19 3.18-1.19.64 1.59.24 2.77.12 3.06.74.81 1.19 1.84 1.19 3.11 0 4.45-2.69 5.42-5.26 5.7.41.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
-                </svg>
-              </a>
+                <IconGitHub />
+              </IconLink>
             </div>
           </div>
 
           <div className="preview-stage" style={{ background: activeTheme.canvasBackground }}>
             <div className="export-toolbar" aria-label="导出工具">
-              <button
-                className="icon-button"
-                type="button"
-                data-tooltip="下载 SVG"
-                aria-label="下载 SVG"
-                title="下载 SVG"
-                disabled={downloadDisabled}
-                onClick={handleSvgDownload}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2v10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M7 8l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <text x="12" y="22" textAnchor="middle" fontSize="8" fontWeight="800" fontFamily="Arial,Helvetica,sans-serif" letterSpacing="0.5">SVG</text>
-                </svg>
-              </button>
-              <button
-                className="icon-button"
-                type="button"
-                data-tooltip="下载 PNG"
-                aria-label="下载 PNG"
-                title="下载 PNG"
-                disabled={downloadDisabled}
-                onClick={() => {
-                  void handlePngDownload();
-                }}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2v10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M7 8l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <text x="12" y="22" textAnchor="middle" fontSize="8" fontWeight="800" fontFamily="Arial,Helvetica,sans-serif" letterSpacing="0.5">PNG</text>
-                </svg>
-              </button>
+              <IconButton tooltip="下载 SVG" disabled={downloadDisabled} onClick={handleSvgDownload}>
+                <IconDownloadSvg />
+              </IconButton>
+              <IconButton tooltip="下载 PNG" disabled={downloadDisabled} onClick={() => { void handlePngDownload(); }}>
+                <IconDownloadPng />
+              </IconButton>
             </div>
             <div className="empty-state" hidden={Boolean(source.trim())}>
               <p>等待图表渲染</p>
@@ -797,9 +738,9 @@ function App() {
                 <h3 id="load-popover-title">载入稿件</h3>
                 <p className="popover-description">从当前浏览器中已保存的稿件里搜索、载入或删除。</p>
               </div>
-              <button className="ghost-button compact-button" type="button" onClick={closeLoadPopover}>
-                关闭
-              </button>
+              <IconButton tooltip="关闭" onClick={closeLoadPopover}>
+                <IconClose />
+              </IconButton>
             </div>
 
             <div className="popover-body">
@@ -881,9 +822,9 @@ function App() {
                       : '输入稿件名称后保存到当前浏览器的 localStorage。'}
                 </p>
               </div>
-              <button className="ghost-button compact-button" type="button" onClick={closeSavePopover}>
-                关闭
-              </button>
+              <IconButton tooltip="关闭" onClick={closeSavePopover}>
+                <IconClose />
+              </IconButton>
             </div>
 
             <form className="popover-body popover-form" onSubmit={handleSaveSubmit}>
