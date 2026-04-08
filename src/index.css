@@ -749,6 +749,53 @@ svg {
   width: min(480px, calc(100vw - 32px));
 }
 
+/* ---- Toast ---- */
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(147, 166, 201, 0.18);
+  background: rgba(14, 26, 46, 0.96);
+  backdrop-filter: blur(12px);
+  font-size: 0.92rem;
+  font-family: var(--font-ui);
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+  animation: toast-in 200ms ease both;
+  pointer-events: none;
+}
+
+.toast.is-success {
+  color: var(--success);
+  border-color: rgba(134, 228, 165, 0.25);
+}
+
+.toast.is-error {
+  color: var(--danger);
+  border-color: rgba(255, 122, 143, 0.25);
+}
+
+.toast.is-info {
+  color: var(--accent);
+  border-color: rgba(120, 216, 255, 0.25);
+}
+
 .popover-header {
   display: flex;
   justify-content: space-between;

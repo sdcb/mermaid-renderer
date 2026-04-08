@@ -92,7 +92,7 @@ function App() {
   const [savedDiagrams, setSavedDiagrams] = useState<SavedDiagram[]>(() => readSavedDiagrams());
   const [diagramTitle, setDiagramTitle] = useState('');
   const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
-  const [storageNotice, setStorageNotice] = useState<StorageNotice | null>(null);
+  const [toast, setToast] = useState<StorageNotice | null>(null);
   const [isLoadPopoverOpen, setIsLoadPopoverOpen] = useState(false);
   const [loadSearchQuery, setLoadSearchQuery] = useState('');
   const [isSavePopoverOpen, setIsSavePopoverOpen] = useState(false);
@@ -105,6 +105,7 @@ function App() {
   const renderTokenRef = useRef(0);
   const renderDebounceTimerRef = useRef<number | null>(null);
   const viewportResizeTimerRef = useRef<number | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
   const resizeStateRef = useRef<{ workspaceLeft: number } | null>(null);
   const shouldRenderImmediatelyRef = useRef(true);
 
@@ -114,12 +115,13 @@ function App() {
     ? { '--editor-width': `${editorWidth}px` }
     : undefined) as CSSProperties | undefined;
   const currentDiagram = currentDiagramId ? savedDiagrams.find((diagram) => diagram.id === currentDiagramId) ?? null : null;
+  const saveDisabled = currentDiagram !== null
+    && source === currentDiagram.source
+    && activeThemeId === currentDiagram.themeId;
   const normalizedLoadSearchQuery = loadSearchQuery.trim().toLowerCase();
   const filteredDiagrams = normalizedLoadSearchQuery
     ? savedDiagrams.filter((diagram) => diagram.title.toLowerCase().includes(normalizedLoadSearchQuery))
     : savedDiagrams;
-  const currentDiagramLabel = currentDiagram?.title ?? '';
-  const detachedTitleLabel = !currentDiagram && diagramTitle.trim() ? `${diagramTitle.trim()}（未绑定）` : '';
 
   const clearTimers = () => {
     if (renderDebounceTimerRef.current !== null) {
@@ -392,6 +394,17 @@ function App() {
     setSource(value ?? '');
   };
 
+  const showToast = (notice: StorageNotice) => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    setToast(notice);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 3000);
+  };
+
   const openLoadPopover = () => {
     setLoadSearchQuery('');
     setIsSavePopoverOpen(false);
@@ -497,7 +510,7 @@ function App() {
   const handleSaveDiagram = () => {
     const trimmedSource = source.trim();
     if (!trimmedSource) {
-      setStorageNotice({
+      showToast({
         kind: 'error',
         text: '空白内容无法保存，请先输入 Mermaid 图形定义。',
       });
@@ -531,12 +544,12 @@ function App() {
       setDiagramTitle(title);
       setSaveTitleInput(title);
       setIsSavePopoverOpen(false);
-      setStorageNotice({
+      showToast({
         kind: 'success',
-        text: shouldCreateNew ? `已保存“${title}”。` : `已更新“${title}”。`,
+        text: shouldCreateNew ? `已保存"${title}"。` : `已更新"${title}"。`,
       });
     } catch (error) {
-      setStorageNotice({
+      showToast({
         kind: 'error',
         text: error instanceof Error ? error.message : '保存失败，请稍后重试。',
       });
@@ -548,6 +561,24 @@ function App() {
     handleSaveDiagram();
   };
 
+  const handleDirectSave = () => {
+    if (!currentDiagram) return;
+    try {
+      const now = Date.now();
+      const nextDiagram: SavedDiagram = {
+        ...currentDiagram,
+        source,
+        themeId: activeThemeId,
+        updatedAt: now,
+      };
+      const nextDiagrams = upsertSavedDiagram(nextDiagram);
+      setSavedDiagrams(nextDiagrams);
+      showToast({ kind: 'success', text: `已更新"${currentDiagram.title}"。` });
+    } catch (error) {
+      showToast({ kind: 'error', text: error instanceof Error ? error.message : '保存失败，请稍后重试。' });
+    }
+  };
+
   const handleLoadDiagram = (diagram: SavedDiagram) => {
     shouldRenderImmediatelyRef.current = true;
     setSource(diagram.source);
@@ -555,7 +586,7 @@ function App() {
     setCurrentDiagramId(diagram.id);
     setDiagramTitle(diagram.title);
     setIsLoadPopoverOpen(false);
-    setStorageNotice({
+    showToast({
       kind: 'info',
       text: `已载入“${diagram.title}”。`,
     });
@@ -574,12 +605,12 @@ function App() {
       if (diagram.id === currentDiagramId) {
         setCurrentDiagramId(null);
       }
-      setStorageNotice({
+      showToast({
         kind: 'success',
-        text: diagram.id === currentDiagramId ? `已删除“${diagram.title}”，当前内容已解除关联。` : `已删除“${diagram.title}”。`,
+        text: diagram.id === currentDiagramId ? `已删除"${diagram.title}"，当前内容已解除关联。` : `已删除"${diagram.title}"。`,
       });
     } catch (error) {
-      setStorageNotice({
+      showToast({
         kind: 'error',
         text: error instanceof Error ? error.message : '删除失败，请稍后重试。',
       });
@@ -593,17 +624,12 @@ function App() {
           <div className="panel-header panel-header-editor">
             <div className="panel-copy">
               <h2>Mermaid Renderer</h2>
-              {currentDiagramLabel || detachedTitleLabel ? (
-                <p className="panel-caption">
-                  {currentDiagramLabel ? `当前稿件：${currentDiagramLabel}` : `当前标题：${detachedTitleLabel}`}
-                </p>
-              ) : null}
             </div>
             <div className="panel-toolbar" aria-label="图稿操作">
               <IconButton tooltip="载入" className="toolbar-icon-button" onClick={openLoadPopover}>
                 <IconLoad />
               </IconButton>
-              <IconButton tooltip="保存" className="toolbar-icon-button" onClick={() => openSavePopover('save')}>
+              <IconButton tooltip="保存" className="toolbar-icon-button" disabled={saveDisabled} onClick={currentDiagram ? handleDirectSave : () => openSavePopover('save')}>
                 <IconSave />
               </IconButton>
               <IconButton tooltip="另存为" className="toolbar-icon-button" onClick={() => openSavePopover('save-as')}>
@@ -611,8 +637,6 @@ function App() {
               </IconButton>
             </div>
           </div>
-
-          {storageNotice ? <p className={`storage-notice inline-notice is-${storageNotice.kind}`}>{storageNotice.text}</p> : null}
 
           <div className="editor-field">
             <span className="sr-only">Mermaid 输入框</span>
@@ -850,6 +874,12 @@ function App() {
               </div>
             </form>
           </section>
+        </div>
+      ) : null}
+
+      {toast ? (
+        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
+          {toast.text}
         </div>
       ) : null}
     </div>
