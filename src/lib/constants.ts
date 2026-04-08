@@ -1,5 +1,8 @@
 import type { RenderStatus, ThemePreset } from './types';
 
+export const SAVED_DIAGRAMS_STORAGE_KEY = 'mermaid-renderer.saved-diagrams.v1';
+export const DEFAULT_DIAGRAM_TITLE_PREFIX = '未命名图稿';
+
 export const SAMPLE_DIAGRAM = `flowchart LR
     subgraph 产品流程
         A[需求整理] --> B{方案评审}

@@ -13,3 +13,12 @@ export interface RenderStatus {
   text: string;
   message: string;
 }
+
+export interface SavedDiagram {
+  id: string;
+  title: string;
+  source: string;
+  themeId: string;
+  createdAt: number;
+  updatedAt: number;
+}

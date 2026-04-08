@@ -66,7 +66,7 @@ body::before {
 }
 
 button,
-textarea {
+input {
   font: inherit;
 }
 
@@ -240,31 +240,44 @@ svg {
 }
 
 .editor-field {
-  display: block;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 280px;
 }
 
-.mermaid-input {
+.mermaid-editor-shell {
   width: 100%;
   height: 100%;
+  flex: 1;
   min-height: 340px;
-  padding: 16px;
   border: var(--inner-border-width) solid rgba(147, 166, 201, 0.13);
   border-radius: var(--radius-lg);
   background: rgba(5, 11, 20, 0.85);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.96rem;
-  line-height: 1.7;
-  resize: vertical;
+  overflow: hidden;
   outline: none;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.mermaid-input:focus {
+.mermaid-editor-shell:focus-within {
   border-color: rgba(120, 216, 255, 0.44);
   box-shadow: 0 0 0 4px rgba(120, 216, 255, 0.1);
+}
+
+.mermaid-editor-shell .monaco-editor,
+.mermaid-editor-shell .monaco-editor-background,
+.mermaid-editor-shell .margin,
+.mermaid-editor-shell .monaco-scrollable-element {
+  background: rgba(5, 11, 20, 0.85) !important;
+}
+
+.editor-loading {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-secondary);
+  background: rgba(5, 11, 20, 0.85);
 }
 
 .status-card,
@@ -321,6 +334,152 @@ svg {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   margin-top: 10px;
+}
+
+.storage-section {
+  display: grid;
+  gap: 12px;
+}
+
+.storage-heading {
+  align-items: flex-start;
+}
+
+.section-caption {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.storage-form,
+.storage-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.text-input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(147, 166, 201, 0.16);
+  border-radius: 14px;
+  background: rgba(7, 15, 27, 0.74);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.text-input::placeholder {
+  color: var(--text-soft);
+}
+
+.text-input:focus {
+  border-color: rgba(120, 216, 255, 0.35);
+  box-shadow: 0 0 0 4px rgba(120, 216, 255, 0.08);
+}
+
+.storage-count {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.storage-notice {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.storage-notice.is-success {
+  color: var(--success);
+}
+
+.storage-notice.is-error {
+  color: var(--danger);
+}
+
+.storage-notice.is-info {
+  color: var(--accent);
+}
+
+.saved-diagram-list {
+  display: grid;
+  gap: 10px;
+  max-height: 300px;
+  padding-right: 2px;
+  overflow: auto;
+}
+
+.saved-diagram-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(147, 166, 201, 0.12);
+  border-radius: 16px;
+  background: rgba(7, 15, 27, 0.6);
+}
+
+.saved-diagram-card.is-active {
+  border-color: rgba(120, 216, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(120, 216, 255, 0.16);
+}
+
+.saved-diagram-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.saved-diagram-copy strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-diagram-copy span {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.saved-diagram-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.saved-diagram-empty {
+  display: grid;
+  place-items: center;
+  min-height: 108px;
+  padding: 16px;
+  border: 1px dashed rgba(147, 166, 201, 0.16);
+  border-radius: 16px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.saved-diagram-empty p {
+  margin: 0;
+}
+
+.compact-button {
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+.danger-button {
+  border-color: rgba(255, 122, 143, 0.22);
+  color: #ffd5db;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  border-color: rgba(255, 122, 143, 0.42);
+  background: rgba(74, 18, 32, 0.72);
 }
 
 .theme-card {
@@ -594,7 +753,7 @@ svg {
     padding: var(--panel-padding);
   }
 
-  .mermaid-input,
+  .mermaid-editor-shell,
   .preview-stage {
     border-color: rgba(147, 166, 201, 0.09);
   }
@@ -609,6 +768,16 @@ svg {
   }
 
   .zoom-controls {
+    justify-content: flex-start;
+  }
+
+  .storage-form,
+  .storage-search-row,
+  .saved-diagram-card {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-diagram-actions {
     justify-content: flex-start;
   }
 }
