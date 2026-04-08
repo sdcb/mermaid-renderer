@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react';
+import type { OnMount } from '@monaco-editor/react';
 import mermaid from 'mermaid';
 import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -394,6 +395,35 @@ function App() {
     setSource(value ?? '');
   };
 
+  const triggerSave = useEffectEvent(() => {
+    if (saveDisabled || isSavePopoverOpen || isLoadPopoverOpen) return;
+    if (currentDiagram) {
+      handleDirectSave();
+    } else {
+      openSavePopover('save');
+    }
+  });
+
+  useEffect(() => {
+    const handleCtrlS = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        triggerSave();
+      }
+    };
+    window.addEventListener('keydown', handleCtrlS);
+    return () => window.removeEventListener('keydown', handleCtrlS);
+  }, []);
+
+  const handleEditorMount: OnMount = (editor, monaco) => {
+    editor.addAction({
+      id: 'save-diagram',
+      label: '保存稿件',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: () => triggerSave(),
+    });
+  };
+
   const showToast = (notice: StorageNotice) => {
     if (toastTimerRef.current !== null) {
       window.clearTimeout(toastTimerRef.current);
@@ -649,6 +679,7 @@ function App() {
                 theme="vs-dark"
                 value={source}
                 onChange={handleEditorChange}
+                onMount={handleEditorMount}
               />
             </div>
           </div>
