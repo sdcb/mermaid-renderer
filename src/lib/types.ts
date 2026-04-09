@@ -14,3 +14,8 @@ export interface SavedDiagram {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface StorageNotice {
+  kind: 'success' | 'error' | 'info';
+  text: string;
+}

@@ -6,6 +6,8 @@ declare module 'svg-pan-zoom' {
     resetZoom(): void;
     center(): void;
     fit(): void;
+    resize(): void;
+    updateBBox(): void;
   }
 
   interface SvgPanZoomOptions {

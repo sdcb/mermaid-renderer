@@ -3,7 +3,6 @@ import type { OnMount } from '@monaco-editor/react';
 import mermaid from 'mermaid';
 import type { CSSProperties, FormEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import svgPanZoom from 'svg-pan-zoom';
 import {
   DEFAULT_DIAGRAM_TITLE_PREFIX,
   SAMPLE_DIAGRAM,
@@ -11,21 +10,15 @@ import {
   THEME_PRESETS,
 } from './lib/constants';
 import { deleteSavedDiagram, readSavedDiagrams, upsertSavedDiagram } from './lib/savedDiagrams';
-import { downloadBlob, downloadDataUrl, normalizeSvgMarkup, sanitizeSvgForPng, timestampForFilename } from './lib/exporters';
-import type { SavedDiagram, ThemePreset } from './lib/types';
-import type { SvgPanZoomInstance } from 'svg-pan-zoom';
-import { IconButton, IconLink } from './components/IconButton';
+import type { SavedDiagram, StorageNotice, ThemePreset } from './lib/types';
+import { IconButton } from './components/IconButton';
+import { MermaidPreview } from './components/MermaidPreview';
+import { ToastHost } from './components/ToastHost';
 import {
   IconClose,
   IconLoad,
   IconSave,
   IconSaveAs,
-  IconResetView,
-  IconDownloadSvg,
-  IconDownloadPng,
-  IconGitHub,
-  IconZoomOut,
-  IconZoomIn,
 } from './icons';
 
 const RESIZER_WIDTH = 8;
@@ -43,11 +36,6 @@ const MONACO_OPTIONS = {
   wordWrap: 'on',
   wrappingIndent: 'same',
 } as const;
-
-type StorageNotice = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
-};
 
 type SavePopoverMode = 'save' | 'save-as';
 
@@ -104,14 +92,13 @@ function App() {
   const [editorReady, setEditorReady] = useState(false);
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
-  const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
-  const panZoomRef = useRef<SvgPanZoomInstance | null>(null);
   const renderTokenRef = useRef(0);
   const renderDebounceTimerRef = useRef<number | null>(null);
   const viewportResizeTimerRef = useRef<number | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const resizeStateRef = useRef<{ workspaceLeft: number } | null>(null);
   const shouldRenderImmediatelyRef = useRef(true);
+  const triggerSaveRef = useRef<() => void>(() => {});
 
   const activeTheme = getActiveTheme(activeThemeId);
   const downloadDisabled = !currentValid || !lastSuccessfulSvg;
@@ -138,13 +125,6 @@ function App() {
       viewportResizeTimerRef.current = null;
     }
   };
-
-  const destroyPanZoom = useEffectEvent(() => {
-    if (panZoomRef.current) {
-      panZoomRef.current.destroy();
-      panZoomRef.current = null;
-    }
-  });
 
   const clampEditorWidth = (nextWidth: number) => {
     const workspaceElement = workspaceRef.current;
@@ -199,7 +179,6 @@ function App() {
     if (!trimmedSource) {
       setCurrentValid(false);
       setLastSuccessfulSvg('');
-      destroyPanZoom();
       return;
     }
 
@@ -261,40 +240,6 @@ function App() {
   }, [activeThemeId, renderCycle, source]);
 
   useEffect(() => {
-    destroyPanZoom();
-
-    const svgElement = previewSurfaceRef.current?.querySelector('svg');
-    if (!svgElement) {
-      return;
-    }
-
-    svgElement.removeAttribute('style');
-    svgElement.removeAttribute('width');
-    svgElement.removeAttribute('height');
-    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-    const svgStyle = svgElement.style;
-    svgStyle.width = '100%';
-    svgStyle.height = '100%';
-    svgStyle.maxWidth = 'none';
-    svgStyle.maxHeight = 'none';
-    svgStyle.display = 'block';
-
-    panZoomRef.current = svgPanZoom(svgElement, {
-      controlIconsEnabled: false,
-      fit: true,
-      center: true,
-      minZoom: 0.3,
-      maxZoom: 8,
-      zoomScaleSensitivity: 0.22,
-    });
-
-    return () => {
-      destroyPanZoom();
-    };
-  }, [lastSuccessfulSvg]);
-
-  useEffect(() => {
     syncWorkspaceLayout();
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -334,7 +279,6 @@ function App() {
       window.removeEventListener('pointercancel', handlePointerEnd);
       window.removeEventListener('resize', handleViewportResize);
       clearTimers();
-      destroyPanZoom();
       document.body.classList.remove('is-resizing');
     };
   }, [source]);
@@ -384,20 +328,20 @@ function App() {
     setSource(value ?? '');
   };
 
-  const triggerSave = useEffectEvent(() => {
+  triggerSaveRef.current = () => {
     if (saveDisabled || isSavePopoverOpen || isLoadPopoverOpen) return;
     if (currentDiagram) {
       handleDirectSave();
     } else {
       openSavePopover('save');
     }
-  });
+  };
 
   useEffect(() => {
     const handleCtrlS = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
         event.preventDefault();
-        triggerSave();
+        triggerSaveRef.current();
       }
     };
     window.addEventListener('keydown', handleCtrlS);
@@ -410,7 +354,7 @@ function App() {
       id: 'save-diagram',
       label: '保存稿件',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => triggerSave(),
+      run: () => triggerSaveRef.current(),
     });
   };
 
@@ -472,55 +416,6 @@ function App() {
     setIsResizing(true);
     document.body.classList.add('is-resizing');
     event.preventDefault();
-  };
-
-  const handleSvgDownload = () => {
-    if (downloadDisabled) {
-      return;
-    }
-
-    const exportPayload = normalizeSvgMarkup(lastSuccessfulSvg, activeTheme.canvasBackground);
-    const blob = new Blob([exportPayload.markup], { type: 'image/svg+xml;charset=utf-8' });
-    downloadBlob(blob, `mermaid-diagram-${timestampForFilename()}.svg`);
-  };
-
-  const handlePngDownload = async () => {
-    if (downloadDisabled) {
-      return;
-    }
-
-    const sanitizedSvg = sanitizeSvgForPng(lastSuccessfulSvg);
-    const exportPayload = normalizeSvgMarkup(sanitizedSvg, activeTheme.canvasBackground);
-    const svgBlob = new Blob([exportPayload.markup], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-
-    try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('PNG 导出失败，SVG 图像无法加载。'));
-        img.src = svgUrl;
-      });
-
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(exportPayload.width));
-      canvas.height = Math.max(1, Math.round(exportPayload.height));
-
-      const context = canvas.getContext('2d');
-      if (!context) {
-        throw new Error('PNG 导出失败，浏览器不支持 2D canvas。');
-      }
-
-      context.fillStyle = activeTheme.canvasBackground;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-      downloadDataUrl(canvas.toDataURL('image/png'), `mermaid-diagram-${timestampForFilename()}.png`);
-    } catch (error) {
-      console.error('PNG export failed:', error);
-    } finally {
-      URL.revokeObjectURL(svgUrl);
-    }
   };
 
   const handleSaveDiagram = () => {
@@ -710,62 +605,12 @@ function App() {
           onPointerDown={handleResizeStart}
         />
 
-        <section className="panel panel-preview">
-          <div className="panel-header">
-            <div>
-              <h2>图形预览</h2>
-            </div>
-            <div className="preview-toolbar">
-              <div className="zoom-controls" aria-label="缩放控制">
-                <IconButton tooltip="缩小" onClick={() => panZoomRef.current?.zoomOut()}>
-                  <IconZoomOut />
-                </IconButton>
-                <IconButton
-                  tooltip="重置视图"
-                  onClick={() => {
-                    if (!panZoomRef.current) {
-                      return;
-                    }
-                    panZoomRef.current.resetZoom();
-                    panZoomRef.current.center();
-                    panZoomRef.current.fit();
-                  }}
-                >
-                  <IconResetView />
-                </IconButton>
-                <IconButton tooltip="放大" onClick={() => panZoomRef.current?.zoomIn()}>
-                  <IconZoomIn />
-                </IconButton>
-              </div>
-              <IconLink
-                tooltip="GitHub"
-                href="https://github.com/sdcb/mermaid-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="github-link-inline"
-              >
-                <IconGitHub />
-              </IconLink>
-            </div>
-          </div>
-
-          <div className="preview-stage" style={{ background: activeTheme.canvasBackground }}>
-            <div className="export-toolbar" aria-label="导出工具">
-              <IconButton tooltip="下载 SVG" disabled={downloadDisabled} onClick={handleSvgDownload}>
-                <IconDownloadSvg />
-              </IconButton>
-              <IconButton tooltip="下载 PNG" disabled={downloadDisabled} onClick={() => { void handlePngDownload(); }}>
-                <IconDownloadPng />
-              </IconButton>
-            </div>
-            <div className="empty-state" hidden={Boolean(source.trim())}>
-              <p>等待图表渲染</p>
-            </div>
-            <div ref={previewSurfaceRef} className="preview-surface" aria-live="polite">
-              {lastSuccessfulSvg ? <div className="preview-frame" dangerouslySetInnerHTML={{ __html: lastSuccessfulSvg }} /> : null}
-            </div>
-          </div>
-        </section>
+        <MermaidPreview
+          background={activeTheme.canvasBackground}
+          downloadDisabled={downloadDisabled}
+          isSourceEmpty={!source.trim()}
+          svgMarkup={lastSuccessfulSvg}
+        />
       </main>
 
       {isLoadPopoverOpen ? (
@@ -897,11 +742,7 @@ function App() {
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
-          {toast.text}
-        </div>
-      ) : null}
+      <ToastHost notice={toast} />
     </div>
   );
 }
